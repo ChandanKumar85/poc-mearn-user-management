@@ -1,5 +1,13 @@
+import AuthScreen from './pages/auth';
+// import Dashboard from './pages/Dashboard';
+
 function App() {
-  return <h1 className="text-3xl font-bold underline">Hello world!</h1>;
+  return (
+    <div className="h-screen">
+      <AuthScreen />
+      {/* <Dashboard /> */}
+    </div>
+  );
 }
 
 export default App;

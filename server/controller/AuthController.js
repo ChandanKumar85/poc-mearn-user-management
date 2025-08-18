@@ -4,11 +4,11 @@ const jwt = require('jsonwebtoken');
 
 // Register a user
 const register = (req, res, next) => {
-  const { name, email, phone, password } = req.body;
-  User.findOne({ phone: phone }).then((existingUser) => {
+  const { userName, emailId, phoneNumber, password } = req.body;
+  User.findOne({ phoneNumber: phoneNumber }).then((existingUser) => {
     if (existingUser) {
       return res.status(400).json({
-        message: 'User already registered',
+        message: 'USER_ALREADY_EXISTS', // User already registered
       });
     }
     bcrypt.hash(password, 10, (err, hashedPass) => {
@@ -18,21 +18,21 @@ const register = (req, res, next) => {
         });
       }
       let user = new User({
-        name,
-        email,
-        phone,
+        userName,
+        emailId,
+        phoneNumber,
         password: hashedPass,
       });
       user
         .save()
         .then((user) => {
           res.status(201).json({
-            message: 'User registered successfully!',
+            message: 'USER_REGISTERED', // User registered successfully!
           });
         })
         .catch((err) => {
           res.status(500).json({
-            message: 'An error occured!',
+            message: 'AN_ERROR_OCCURRED', // An error occured!
             error: err,
           });
         });
@@ -42,46 +42,50 @@ const register = (req, res, next) => {
 
 // To Login
 const login = (req, res, next) => {
-  let { username, password } = req.body;
+  let { userName, password } = req.body;
 
-  User.findOne({ $or: [{ email: username }, { phone: username }] }).then(
-    (user) => {
-      if (user) {
-        bcrypt.compare(password, user.password, (err, result) => {
-          if (err) {
-            res.json({
-              error: err,
-            });
-          }
-          if (result) {
-            let token = jwt.sign({ name: user.name }, 'very(S)ecretValue', {
+  User.findOne({
+    $or: [{ emailId: userName }, { phoneNumber: userName }],
+  }).then((user) => {
+    if (user) {
+      bcrypt.compare(password, user.password, (err, result) => {
+        if (err) {
+          res.json({
+            error: err,
+          });
+        }
+        if (result) {
+          let token = jwt.sign(
+            { userName: user.userName },
+            'very(S)ecretValue',
+            {
               expiresIn: '30s',
-            });
-            let refreshToken = jwt.sign(
-              { name: user.name },
-              'refreshTokenVery(S)ecretValue',
-              {
-                expiresIn: '1h',
-              }
-            );
-            res.json({
-              message: 'Login Successfull!',
-              token,
-              refreshToken,
-            });
-          } else {
-            res.json({
-              message: 'Password does not matched!',
-            });
-          }
-        });
-      } else {
-        res.json({
-          message: 'No user found',
-        });
-      }
+            }
+          );
+          let refreshToken = jwt.sign(
+            { userName: user.userName },
+            'refreshTokenVery(S)ecretValue',
+            {
+              expiresIn: '1h',
+            }
+          );
+          res.json({
+            message: 'LOGIN_SUCCESSFUL', // Login Successfull!
+            token,
+            refreshToken,
+          });
+        } else {
+          res.status(404).json({
+            message: 'INVALID_CREDENTIAL', // Invalid credentials
+          });
+        }
+      });
+    } else {
+      res.json({
+        message: 'NO_USER_FOUND', // No user found
+      });
     }
-  );
+  });
 };
 
 const refreshToken = (req, res, next) => {
@@ -93,12 +97,12 @@ const refreshToken = (req, res, next) => {
         err,
       });
     } else {
-      let token = jwt.sign({ name: decode.name }, 'very(S)ecretValue', {
+      let token = jwt.sign({ userName: decode.userName }, 'very(S)ecretValue', {
         expiresIn: '60s',
       });
       let refreshToken = req.body.refreshToken;
       res.status(200).json({
-        message: 'Token refreshed successfully!',
+        message: 'REFRESHED_TOKEN', // Token refreshed successfully!
         token,
         refreshToken,
       });
