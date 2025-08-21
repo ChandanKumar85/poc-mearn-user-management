@@ -12,6 +12,7 @@ import {
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { loginUser } from '../../api/authApi';
+import { useAuthStore } from '../../store/authStore';
 
 type Inputs = {
   userName: string;
@@ -25,17 +26,24 @@ const Login = () => {
     formState: { errors },
   } = useForm<Inputs>();
 
+  const setTokens = useAuthStore((state) => state.setTokens);
   const navigate = useNavigate();
 
-  const { mutate, isPending, isError, isSuccess, error } = useMutation({
+  const { mutate, isPending, isError } = useMutation({
     mutationFn: loginUser,
     onSuccess: (res) => {
-      if (res.message === 'LOGIN_SUCCESSFUL') navigate('/dashboard');
+      if (res.message === 'NO_USER_FOUND') {
+        throw isError;
+      }
+      if (res.message === 'LOGIN_SUCCESSFUL') {
+        setTokens(res.token, res.refreshToken);
+        navigate('/dashboard');
+      }
     },
   });
 
-  const formSubmit: SubmitHandler<Inputs> = async (res) => {
-    mutate(res);
+  const formSubmit: SubmitHandler<Inputs> = async (formValue: Inputs) => {
+    mutate(formValue);
   };
 
   return (
@@ -58,7 +66,7 @@ const Login = () => {
 
         {isError && (
           <Typography color="error" align="center" mt={2}>
-            ❌{(error as any)?.response?.data?.message}
+            User name or Password is wrong!
           </Typography>
         )}
 

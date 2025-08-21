@@ -59,7 +59,7 @@ const login = (req, res, next) => {
             { userName: user.userName },
             'very(S)ecretValue',
             {
-              expiresIn: '30s',
+              expiresIn: '30m',
             }
           );
           let refreshToken = jwt.sign(
