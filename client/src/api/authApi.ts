@@ -1,16 +1,5 @@
 import { http } from './http';
-
-export type RegisterPayload = {
-  userName: string;
-  emailId: string;
-  phoneNumber: string;
-  password: string;
-};
-
-export type LoginPayload = {
-  userName: string;
-  password: string;
-};
+import type { LoginPayload, RegisterPayload } from './models/auth.interface';
 
 // Register User
 export const registerUser = async (data: RegisterPayload) => {

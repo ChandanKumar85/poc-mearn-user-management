@@ -1,11 +1,9 @@
-import AuthScreen from './pages/auth';
-// import Dashboard from './pages/Dashboard';
+import AppRoutes from './routes/AppRoutes';
 
 function App() {
   return (
     <div className="h-screen">
-      <AuthScreen />
-      {/* <Dashboard /> */}
+      <AppRoutes />
     </div>
   );
 }
