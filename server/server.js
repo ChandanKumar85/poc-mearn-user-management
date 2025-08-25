@@ -12,10 +12,19 @@ const AuthRoute = require('./routes/auth');
 
 const EmployeeRoute = require('./routes/employee');
 
-mongoose.connect(process.env.DATABASE_URL, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+const DB = process.env.DATABASE.replace(
+  '<PASSWORD>',
+  process.env.DATABASE_PASSWORD
+);
+
+mongoose
+  .connect(DB || process.env.DATABASE_LOCAL)
+  .then((con) => {
+    console.log('DB connection successful!');
+  })
+  .catch((err) => {
+    console.error('DB connection error:', err.message);
+  });
 
 const db = mongoose.connection;
 db.on('error', (err) => {
