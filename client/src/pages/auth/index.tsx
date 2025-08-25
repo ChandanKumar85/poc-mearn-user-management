@@ -1,12 +1,10 @@
 import { Outlet } from 'react-router-dom';
-import { AuthRoute } from './AuthRoute';
 
 const AuthScreen = () => {
   return (
-    <>
-      <AuthRoute />
+    <div className="auth-wrapper">
       <Outlet />
-    </>
+    </div>
   );
 };
 
