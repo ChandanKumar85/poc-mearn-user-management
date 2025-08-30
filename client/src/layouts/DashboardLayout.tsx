@@ -1,19 +1,10 @@
 import { useState } from 'react';
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  IconButton,
-  Box,
-  Avatar,
-  Menu,
-  MenuItem,
-  Divider,
-} from '@mui/material';
+import { AppBar, Toolbar, Typography, IconButton, Box, Avatar, Menu, MenuItem, Divider } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { Sidebar } from '../components/Sidebar';
 import { useAuthStore } from '../store/authStore';
 import { useNavigate } from 'react-router-dom';
+import { logoutUser } from '../api/authApi';
 
 export default function DashboardLayout() {
   const [open, setOpen] = useState(false);
@@ -33,7 +24,7 @@ export default function DashboardLayout() {
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     clearTokens();
     navigate('/login');
   };
@@ -41,19 +32,11 @@ export default function DashboardLayout() {
   return (
     <Box sx={{ display: 'flex' }}>
       {/* AppBar */}
-      <AppBar
-        position="fixed"
-        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
-      >
+      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
           {/* Left side - Logo + Hamburger */}
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <IconButton
-              color="inherit"
-              edge="start"
-              onClick={handleDrawerToggle}
-              sx={{ mr: 2 }}
-            >
+            <IconButton color="inherit" edge="start" onClick={handleDrawerToggle} sx={{ mr: 2 }}>
               <MenuIcon />
             </IconButton>
             <Typography variant="h6" noWrap>
@@ -108,9 +91,7 @@ export default function DashboardLayout() {
         }}
       >
         <Typography variant="h4">Welcome to Dashboard</Typography>
-        <Typography mt={2}>
-          This is your main content area. Add your routes/components here.
-        </Typography>
+        <Typography mt={2}>This is your main content area. Add your routes/components here.</Typography>
       </Box>
     </Box>
   );

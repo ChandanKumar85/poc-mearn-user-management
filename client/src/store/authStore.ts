@@ -1,37 +1,51 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { jwtDecode } from 'jwt-decode';
+import { logoutUser } from '../api/authApi';
+import type { JwtPayload } from '../api/models/auth.interface';
 
 interface AuthState {
   token: string | null;
-  refreshToken: string | null;
-  setTokens: (jwt: string, refresh: string) => void;
+  setTokens: (jwt: string) => void;
   clearTokens: () => void;
-  isAuthenticated: boolean;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       token: null,
-      refreshToken: null,
-      isAuthenticated: false,
 
-      setTokens: (jwt, refresh) =>
-        set({
-          token: jwt,
-          refreshToken: refresh,
-          isAuthenticated: true,
-        }),
+      setTokens: (jwt) => {
+        const decoded = jwtDecode<JwtPayload>(jwt);
+        const expiresInMs = decoded.exp * 1000 - Date.now();
 
-      clearTokens: () =>
-        set({
-          token: null,
-          refreshToken: null,
-          isAuthenticated: false,
-        }),
+        setTimeout(async () => {
+          try {
+            await logoutUser({ activeId: decoded.activeId });
+          } catch (error) {
+            console.error('Auto-logout failed:', error);
+          }
+          set({ token: null });
+        }, expiresInMs);
+
+        set({ token: jwt });
+      },
+
+      clearTokens: async () => {
+        const token = get().token;
+        if (token) {
+          const decoded = jwtDecode<JwtPayload>(token);
+          try {
+            await logoutUser({ activeId: decoded.activeId });
+          } catch (error) {
+            console.error('Logout failed:', error);
+          }
+        }
+        set({ token: null });
+      },
     }),
     {
-      name: 'auth-storage', // saves to localStorage
+      name: 'authStorage',
     }
   )
 );

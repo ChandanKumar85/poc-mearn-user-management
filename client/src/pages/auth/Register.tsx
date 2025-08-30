@@ -12,8 +12,9 @@ import {
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { registerUser } from '../../api/authApi';
 import { useMutation } from '@tanstack/react-query';
+import CryptoJS from 'crypto-js';
 
-type Inputs = {
+type RegisterPayload = {
   userName: string;
   emailId: string;
   phoneNumber: string;
@@ -27,7 +28,7 @@ const Register = () => {
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm<Inputs>();
+  } = useForm<RegisterPayload>();
   const navigate = useNavigate();
 
   const passwordValue = watch('password');
@@ -36,16 +37,24 @@ const Register = () => {
     mutationFn: registerUser,
     onSuccess: (res) => {
       if (res.message === 'USER_REGISTERED') navigate('/login');
-      console.log(res);
     },
   });
 
-  const formSubmit: SubmitHandler<Inputs> = async ({
-    confirmPassword,
-    ...rest
-  }) => {
-    mutate(rest);
-    console.log(rest);
+  const formSubmit: SubmitHandler<RegisterPayload> = async (data) => {
+    const SECRET_KEY = 'my-secret-key';
+    const encryptedPassword = CryptoJS.AES.encrypt(
+      data.password,
+      SECRET_KEY
+    ).toString();
+    const encryptedConfirmPassword = CryptoJS.AES.encrypt(
+      data.confirmPassword,
+      SECRET_KEY
+    ).toString();
+    mutate({
+      ...data,
+      password: encryptedPassword,
+      confirmPassword: encryptedConfirmPassword,
+    });
   };
 
   return (

@@ -1,16 +1,8 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Container,
-  Typography,
-  TextField,
-  Button,
-  Link,
-  Paper,
-  CircularProgress,
-} from '@mui/material';
+import { Box, Container, Typography, TextField, Button, Link, Paper, CircularProgress } from '@mui/material';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
+import CryptoJS from 'crypto-js';
 import { loginUser } from '../../api/authApi';
 import { useAuthStore } from '../../store/authStore';
 
@@ -29,53 +21,43 @@ const Login = () => {
   const setTokens = useAuthStore((state) => state.setTokens);
   const navigate = useNavigate();
 
-  const { mutate, isPending, isError } = useMutation({
+  const { mutate, isPending, isError, error } = useMutation({
     mutationFn: loginUser,
     onSuccess: (res) => {
-      if (res.message === 'NO_USER_FOUND') {
-        throw isError;
-      }
       if (res.message === 'LOGIN_SUCCESSFUL') {
-        setTokens(res.token, res.refreshToken);
+        setTokens(res.token);
         navigate('/dashboard');
       }
     },
   });
 
-  const formSubmit: SubmitHandler<Inputs> = async (formValue: Inputs) => {
-    mutate(formValue);
+  const formSubmit: SubmitHandler<Inputs> = async (data: Inputs) => {
+    const SECRET_KEY = 'my-secret-key';
+    const encryptedPassword = CryptoJS.AES.encrypt(data.password, SECRET_KEY).toString();
+    mutate({ ...data, password: encryptedPassword });
   };
 
   return (
-    <Container
-      component="main"
-      maxWidth="xs"
-      sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center' }}
-    >
+    <Container component="main" maxWidth="xs" sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center' }}>
       <Paper elevation={6} sx={{ p: 4, borderRadius: 3, width: '100%' }}>
-        <Typography
-          component="h1"
-          variant="h5"
-          align="center"
-          fontWeight="bold"
-          color="text.primary"
-          mb={3}
-        >
+        <Typography component="h1" variant="h5" align="center" fontWeight="bold" color="text.primary" mb={3}>
           Sign in to your account
         </Typography>
 
         {isError && (
           <Typography color="error" align="center" mt={2}>
-            User name or Password is wrong!
+            {error instanceof Error && error.message === 'NO_USER_FOUND' && 'User name or Password is wrong!'}
+            {error instanceof Error &&
+              error.message === 'ALREADY_LOGGED_IN_ON_ANOTHER_DEVICE' &&
+              'You are already logged in on another device!'}
+            {error instanceof Error &&
+              error.message !== 'NO_USER_FOUND' &&
+              error.message !== 'ALREADY_LOGGED_IN_ON_ANOTHER_DEVICE' &&
+              'User name or Password is wrong!'}
           </Typography>
         )}
 
-        <Box
-          component="form"
-          noValidate
-          sx={{ mt: 1 }}
-          onSubmit={handleSubmit(formSubmit)}
-        >
+        <Box component="form" noValidate sx={{ mt: 1 }} onSubmit={handleSubmit(formSubmit)}>
           <TextField
             margin="normal"
             required
@@ -88,11 +70,7 @@ const Login = () => {
               required: 'This field is required',
             })}
           />
-          {errors.userName && (
-            <Typography className="error-text">
-              {errors.userName.message}
-            </Typography>
-          )}
+          {errors.userName && <Typography className="error-text">{errors.userName.message}</Typography>}
 
           <TextField
             margin="normal"
@@ -106,33 +84,14 @@ const Login = () => {
               required: 'This field is required',
             })}
           />
-          {errors.password && (
-            <Typography className="error-text">
-              {errors.password.message}
-            </Typography>
-          )}
+          {errors.password && <Typography className="error-text">{errors.password.message}</Typography>}
 
           <Box textAlign="right" mt={1}>
-            <Link
-              component={NavLink}
-              to="/forgot-password"
-              variant="body2"
-              underline="hover"
-              color="primary"
-            >
+            <Link component={NavLink} to="/forgot-password" variant="body2" underline="hover" color="primary">
               Forgot your password?
             </Link>
           </Box>
 
-          {/* <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            color="primary"
-            sx={{ mt: 3, mb: 2, py: 1.2, borderRadius: 2 }}
-          >
-            Sign In
-          </Button> */}
           <Button
             type="submit"
             fullWidth
@@ -141,28 +100,13 @@ const Login = () => {
             sx={{ mt: 3, mb: 2, py: 1.2, borderRadius: 2 }}
             disabled={isPending}
           >
-            {isPending ? (
-              <CircularProgress size={24} sx={{ color: 'white' }} />
-            ) : (
-              'Sign In'
-            )}
+            {isPending ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Sign In'}
           </Button>
         </Box>
 
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          align="center"
-          mt={3}
-        >
+        <Typography variant="body2" color="text.secondary" align="center" mt={3}>
           Don’t have an account?{' '}
-          <Link
-            component={NavLink}
-            to="/register"
-            underline="hover"
-            color="primary"
-            fontWeight="medium"
-          >
+          <Link component={NavLink} to="/register" underline="hover" color="primary" fontWeight="medium">
             Register
           </Link>
         </Typography>
