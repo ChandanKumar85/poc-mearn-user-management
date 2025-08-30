@@ -1,8 +1,12 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
+
 const Schema = mongoose.Schema;
 
+// =======================
+// User Schema
+// =======================
 const userSchema = new Schema(
   {
     userName: {
@@ -10,9 +14,7 @@ const userSchema = new Schema(
       required: [true, 'This field is required'],
       minLength: [3, 'User Name must be at least 3 characters'],
       validate: {
-        validator: function (v) {
-          return /^[A-Za-z\s]+$/.test(v);
-        },
+        validator: (v) => /^[A-Za-z\s]+$/.test(v),
         message: 'User Name should not contain numbers or special characters',
       },
     },
@@ -28,21 +30,16 @@ const userSchema = new Schema(
       required: [true, 'This field is required'],
       unique: true,
       validate: {
-        validator: function (v) {
-          return /^[0-9]{10}$/.test(v); // only 10 digits
-        },
-        message: 'Phone number must be exactly 10 digits and only numbers',
+        validator: (v) => /^[0-9]{10}$/.test(v), // only 10 digits
+        message: 'Phone number must be exactly 10 digits',
       },
     },
     password: {
       type: String,
       required: [true, 'This field is required'],
       validate: {
-        validator: function (v) {
-          // Must be at least 8 chars, include 1 uppercase, 1 number, 1 special char
-          return /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/.test(v);
-        },
-        message: 'Password must be at least 8 characters long and include 1 uppercase, 1 number, and 1 special character',
+        validator: (v) => /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/.test(v),
+        message: 'Password must be at least 8 characters, include 1 uppercase, 1 number, and 1 special character',
       },
     },
     confirmPassword: {
@@ -56,18 +53,19 @@ const userSchema = new Schema(
       },
     },
     profilePhoto: { type: String },
-    role: {
-      type: String,
-    },
+    role: { type: String, default: 'user' },
     activeId: { type: String, default: null },
   },
   { timestamps: true }
 );
 
+// =======================
+// Hash Password Before Save
+// =======================
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 12);
-  this.confirmPassword = undefined;
+  this.confirmPassword = undefined; // remove confirmPassword from DB
   next();
 });
 
