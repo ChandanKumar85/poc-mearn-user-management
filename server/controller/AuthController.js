@@ -102,25 +102,27 @@ const login = async (req, res, next) => {
 
     const randomActiveId = generateRandomId();
 
-    // Generate JWT token
+    // ✅ Generate JWT token
     const token = jwt.sign({ activeId: randomActiveId, userName: user.userName, role: user.role }, process.env.ACCESS_TOKEN_SECRET, {
       expiresIn: process.env.ACCESS_TOKEN_EXPIRE_TIME,
     });
 
-    // store latest token in DB
-    await User.findByIdAndUpdate(user._id, { activeId: randomActiveId });
+    // ✅ Decode expiry from token
+    const decoded = jwt.decode(token);
+    const expiryDate = new Date(decoded.exp * 1000); // <-- CHANGED
 
-    // Optionally create refresh token
-    // const refreshToken = jwt.sign(
-    //   { userName: user.userName },
-    //   "refreshTokenVery(S)ecretValue",
-    //   { expiresIn: "1h" }
-    // );
+    // ✅ Store activeId + session expiry in DB
+    await User.findByIdAndUpdate(user._id, {
+      $set: {
+        // <-- CHANGED
+        activeId: randomActiveId, // <-- CHANGED
+        sessionExpiresAt: expiryDate, // <-- CHANGED
+      },
+    });
 
     return res.json({
       message: 'LOGIN_SUCCESSFUL',
       token,
-      // refreshToken,
     });
   } catch (error) {
     return res.status(500).json({
@@ -140,8 +142,10 @@ const logout = async (req, res) => {
       return res.status(400).json({ message: 'INVALID_ACTIVE_ID' });
     }
 
-    // Clear activeId in DB
-    await User.findByIdAndUpdate(user._id, { activeId: null });
+    // ✅ Clear activeId + sessionExpiresAt in DB
+    await User.findByIdAndUpdate(user._id, {
+      $set: { activeId: null, sessionExpiresAt: null }, // ⬅️ changed
+    });
 
     return res.json({ message: 'LOGOUT_SUCCESSFUL' });
   } catch (err) {

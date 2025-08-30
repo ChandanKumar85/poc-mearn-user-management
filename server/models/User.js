@@ -60,6 +60,7 @@ const userSchema = new Schema(
       type: String,
     },
     activeId: { type: String, default: null },
+    sessionExpiresAt: { type: Date, default: null }, // ⬅️ store expiry
   },
   { timestamps: true }
 );
